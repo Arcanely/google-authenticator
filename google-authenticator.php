@@ -1,11 +1,11 @@
 <?php
 /*
 Plugin Name: Google Authenticator
-Plugin URI: https://github.com/ivankruchkoff/google-authenticator
+Plugin URI: https://github.com/Arcanely/google-authenticator
 Description: Two-Factor Authentication for WordPress using the Android/iPhone/Blackberry app as One Time Password generator.
-Author: Ivan Kruchkoff
+Author: Ivan Kruchkoff, Nick Adams
 Version: 0.53
-Author URI: https://github.com/ivankruchkoff
+Author URI: https://github.com/Arcanely
 Compatibility: WordPress 5.6
 Text Domain: google-authenticator
 Domain Path: /lang
@@ -173,7 +173,7 @@ function verify( $secretkey, $thistry, $relaxedmode, $lasttimeslot ) {
  * Create a new random secret for the Google Authenticator app.
  * 16 characters, randomly chosen from the allowed Base32 characters
  * equals 10 bytes = 80 bits, as 256^10 = 32^16 = 2^80
- */ 
+ */
 function create_secret() {
     $chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567'; // allowed characters in Base32
     $secret = '';
@@ -197,7 +197,7 @@ function add_qrcode_script() {
  */
 function add_pages() {
 	// No menu entry for this page
-	add_submenu_page( null, esc_html__( 'Google Authenticator', 'google-authenticator' ), null, 'read', self::SETUP_PAGE, array( $this, 'user_setup_page' ) );
+	add_submenu_page( '', esc_html__( 'Google Authenticator', 'google-authenticator' ), null, 'read', self::SETUP_PAGE, array( $this, 'user_setup_page' ) );
 
 	// Site admin screen
 	add_submenu_page( 'options-general.php', esc_html__( 'Google Authenticator', 'google-authenticator' ), esc_html__( 'Google Authenticator', 'google-authenticator' ), 'manage_options', 'google_authenticator', array( $this, 'admin_setup_page' ) );
@@ -380,7 +380,7 @@ function user_setup_page() {
  * @param $is_network
  */
 function save_submitted_admin_setup_page( $is_network ) {
-	$nonce = filter_input( INPUT_POST, 'googleauthenticator', FILTER_SANITIZE_STRING );
+	$nonce = filter_input( INPUT_POST, 'googleauthenticator', FILTER_UNSAFE_RAW );
 	if ( wp_verify_nonce( $nonce, 'googleauthenticator' ) ) {
 		if ( $is_network ) {
 			$network_settings_only = array_key_exists( 'network_settings_only', $_POST );
@@ -585,10 +585,10 @@ function check_otp( $user, $username = '', $password = '' ) {
 
 		// Get the users secret
 		$GA_secret = trim( get_user_option( 'googleauthenticator_secret', $user->ID ) );
-		
+
 		// Figure out if user is using relaxed mode ?
 		$GA_relaxedmode = trim( get_user_option( 'googleauthenticator_relaxedmode', $user->ID ) );
-		
+
 		// Get the verification code entered by the user trying to login
 		if ( !empty( $_POST['googleotp'] )) { // Prevent PHP notices when using app password login
 			$otp = trim( $_POST[ 'googleotp' ] );
@@ -616,7 +616,7 @@ function check_otp( $user, $username = '', $password = '' ) {
 				} else {
 					// Wrong XMLRPC/APP password !
 					return new WP_Error( 'invalid_google_authenticator_password', __( '<strong>ERROR</strong>: The Google Authenticator password is incorrect.', 'google-authenticator' ) );
-				} 		 
+				}
 			} else {
 				if ( ! $this->is_two_screen_signin_enabled() ) {
 					return new WP_Error( 'invalid_google_authenticator_token', __( '<strong>ERROR</strong>: The Google Authenticator code is incorrect or has expired.', 'google-authenticator' ) );
@@ -686,14 +686,14 @@ function profile_personal_options( $args = array() ) {
 	// If editing of Google Authenticator settings has been disabled, just return
 	$GA_hidefromuser = trim( get_user_option( 'googleauthenticator_hidefromuser', $user_id ) );
 	if ( $GA_hidefromuser == 'enabled') return;
-	
+
 	$GA_secret			= trim( get_user_option( 'googleauthenticator_secret', $user_id ) );
 	$GA_enabled			= trim( get_user_option( 'googleauthenticator_enabled', $user_id ) );
 	$GA_relaxedmode		= trim( get_user_option( 'googleauthenticator_relaxedmode', $user_id ) );
 	$GA_description		= trim( get_user_option( 'googleauthenticator_description', $user_id ) );
 	$GA_pwdenabled		= trim( get_user_option( 'googleauthenticator_pwdenabled', $user_id ) );
 	$GA_password		= trim( get_user_option( 'googleauthenticator_passwords', $user_id ) );
-	
+
 	// We dont store the generated app password in cleartext so there is no point in trying
 	// to show the user anything except from the fact that a password exists.
 	if ( $GA_password != '' ) {
@@ -704,7 +704,7 @@ function profile_personal_options( $args = array() ) {
 	if ( '' == $GA_secret ) {
 		$GA_secret = array_key_exists( 'GA_secret', $_REQUEST ) ? sanitize_text_field( $_REQUEST[ 'GA_secret' ] ) : $this->create_secret();
 	}
-	
+
 	if ( '' == $GA_description ) {
 		// Super admins and users with accounts on more than one site get the network name as the helpful name,
 		// everyone else gets the site that they're on
@@ -714,7 +714,7 @@ function profile_personal_options( $args = array() ) {
 			$GA_description = sanitize_text_field( get_bloginfo( 'name' ) );
 		}
 	}
-	
+
 	echo "<h3>".__( 'Google Authenticator Settings', 'google-authenticator' )."</h3>\n";
 
 	echo "<table class=\"form-table\">\n";
@@ -818,7 +818,7 @@ function profile_personal_options( $args = array() ) {
   			var qrcode="otpauth://totp/WordPress:"+escape(jQuery('#GA_description').val())+"?secret="+jQuery('#GA_secret').val()+"&issuer=WordPress";
 			jQuery('#GA_QRCODE').qrcode(qrcode);
  			jQuery('#GA_QR_INFO').show('slow');
-  		});  	
+  		});
 	});
 
 	// If the user starts modifying the description, hide the qrcode
@@ -839,9 +839,9 @@ function profile_personal_options( $args = array() ) {
 		jQuery.post(ajaxurl, data, function(response) {
   			jQuery('#GA_password').val(response['new-secret'].match(new RegExp(".{0,4}","g")).join(' '));
   			jQuery('#GA_passworddesc').show();
-  		});  	
+  		});
 	});
-	
+
 	jQuery('#GA_enabled').bind('change',function() {
 		GoogleAuthenticator_apppasswordcontrol();
 	});
@@ -850,7 +850,7 @@ function profile_personal_options( $args = array() ) {
 		jQuery('#GA_passworddesc').hide();
 		GoogleAuthenticator_apppasswordcontrol();
 	});
-	
+
 	function GoogleAuthenticator_apppasswordcontrol() {
 		if (jQuery('#GA_enabled').is(':checked')) {
 			jQuery('#GA_pwdenabled').removeAttr('disabled');
@@ -893,7 +893,7 @@ function personal_options_update() {
 	$GA_secret	= trim( $_POST['GA_secret'] );
 	$GA_pwdenabled	= ! empty( $_POST['GA_pwdenabled'] );
 	$GA_password	= str_replace(' ', '', trim( $_POST['GA_password'] ) );
-	
+
 	if ( ! $GA_enabled ) {
 		$GA_enabled = 'disabled';
 	} else {
@@ -912,14 +912,14 @@ function personal_options_update() {
 	} else {
 		$GA_pwdenabled = 'enabled';
 	}
-	
+
 	// Only store password if a new one has been generated.
 	if (strtoupper($GA_password) != 'XXXXXXXXXXXXXXXX' ) {
 		// Store the password in a format that can be expanded easily later on if needed.
 		$GA_password = array( 'appname' => 'Default', 'password' => wp_hash_password( $GA_password ) );
 		update_user_option( $user_id, 'googleauthenticator_passwords', json_encode( $GA_password ), true );
 	}
-	
+
 	update_user_option( $user_id, 'googleauthenticator_enabled', $GA_enabled, true );
 	update_user_option( $user_id, 'googleauthenticator_description', $GA_description, true );
 	update_user_option( $user_id, 'googleauthenticator_relaxedmode', $GA_relaxedmode, true );
@@ -963,7 +963,7 @@ function edit_user_profile() {
  */
 function edit_user_profile_update() {
 	global $user_id;
-	
+
 	$GA_enabled	     = ! empty( $_POST['GA_enabled'] );
 	$GA_hidefromuser = ! empty( $_POST['GA_hidefromuser'] );
 
@@ -993,7 +993,7 @@ function ajax_callback() {
 
 	// Some AJAX security.
 	check_ajax_referer( 'GoogleAuthenticatoraction', 'nonce' );
-	
+
 	// Create new secret.
 	$secret = $this->create_secret();
 
@@ -1002,7 +1002,7 @@ function ajax_callback() {
 	echo json_encode( $result );
 
 	// die() is required to return a proper result
-	die(); 
+	die();
 }
 
 } // end class

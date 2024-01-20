@@ -1,5 +1,5 @@
 # Google Authenticator #
-Contributors: ivankk
+Contributors: ivankk, Nick Adams
 
 Tags: authentication, otp, password, security, login, android, iphone, blackberry
 

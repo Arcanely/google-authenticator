@@ -1,0 +1,56 @@
+.google-authenticator.wrap {
+	box-sizing: border-box;
+}
+
+#ga-setup #wpcontent {
+	margin-left: 0;
+}
+
+#ga-setup #adminmenumain {
+	display: none;
+}
+
+.google-authenticator .inner-wrap {
+	max-width: 900px;
+	margin: 0 auto;
+}
+
+.google-authenticator .app-list {
+	display: flex;
+	align-items: center;
+	gap: 15px;
+	flex-wrap: wrap;
+	width: 100%;
+}
+
+.google-authenticator .app-card {
+	width: calc(50% - 28px);
+	height: 40px;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	background: #222;
+	color: #fff;
+	padding: 10px;
+	border-radius: 8px;
+	text-align: center;
+	text-decoration: none;
+	box-sizing: content-box;
+	border: 0;
+	white-space: inherit;
+	line-height: 1.5em;
+}
+
+@media (min-width: 596px) {
+	.google-authenticator .app-card {
+		width: calc((100% / 3) - 30px);
+	}
+
+}
+
+@media (min-width: 768px) {
+	.google-authenticator .app-card {
+		width: calc((100% / 6) - 33px);
+	}
+
+}

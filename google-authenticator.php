@@ -75,6 +75,14 @@ function init() {
 		require_once( 'base32.php' );
 	}
 
+	add_filter('admin_title', 'set_auth_setup_page_title', 0, 2);
+	function set_auth_setup_page_title($admin_title, $title) {
+		if (is_admin() && isset($_GET['page']) && $_GET['page'] === 'google_authenticator_user_page') {
+			$title = "📱Setup 2FA";
+			return $title;
+		}
+	}
+
     if ( ! $this->is_two_screen_signin_enabled() ) {
 	    add_action( 'login_form', array( $this, 'loginform' ) );
 	    add_action( 'login_footer', array( $this, 'loginfooter' ) );
@@ -97,6 +105,16 @@ function init() {
 	add_action( 'current_screen', array ( $this, 'redirect_if_setup_required' ) );
 	add_action( 'admin_notices', array ( $this, 'successful_signup_message' ) );
 	add_action( 'load-admin_page_google_authenticator_user_page', array( $this, 'save_submitted_setup_page' ) );
+//	add_action( 'wp_enqueue_scripts', 'google_authenticator_enqueue_styles' );
+
+//	add_action( 'admin_init',function() {
+//		wp_register_style('google-authenticator', plugins_url('admin-adjustments.css',__FILE__ ));
+//		wp_enqueue_style('google-authenticator');
+//	});
+	function add_my_css_and_my_js_files(){
+		wp_enqueue_style( 'google-authenticator', plugins_url('/css/google-authenticator.css', __FILE__), false, '1.0.0', 'all');
+	}
+	add_action('admin_enqueue_scripts', "add_my_css_and_my_js_files");
 
     load_plugin_textdomain( 'google-authenticator', false, basename( dirname( __FILE__ ) ) . '/lang' );
 }
@@ -331,10 +349,6 @@ function user_setup_page() {
 			'link' => 'https://www.microsoft.com/store/p/authenticator/9nblggh08h54',
 		),
 		array(
-			'text' => __( 'Chrome Browser', 'google-authenticator' ),
-			'link' => 'https://chrome.google.com/webstore/detail/authy-chrome-extension/fhgenkpocbhhddlgkjnfghpjanffonno',
-		),
-		array(
 			'text' => __( 'Desktop', 'google-authenticator' ),
 			'link' => 'https://authy.com/download/',
 		),
@@ -342,35 +356,37 @@ function user_setup_page() {
 	);
 
 	?>
-	<div class="wrap">
-		<h1><?php esc_html_e( 'Google Authenticator Settings', 'google-authenticator' ); ?></h1>
-		<?php if (is_wp_error( $error ) ): ?>
-			<div class="error notice"><p><?php esc_html_e( $error->get_error_message() ); ?></p></div>
-		<?php endif; ?>
-		<p><?php echo esc_html__( "If you haven't already done so, please install the Authy or Google Authenticator app on your mobile device from the App Store:", 'google-authenticator' ); ?></p>
-		<ul>
-			<?php foreach( $app_links as $app_link ): ?>
-				<li><a href="<?php echo esc_url( $app_link[ 'link' ] ); ?>"><?php echo esc_html( $app_link[ 'text' ] ); ?></a></li>
-			<?php endforeach; ?>
-		</ul>
-		<p><?php echo esc_html__( 'The easiest way to enable your account is to add an account by scanning the QR code using the app.', 'google-authenticator' ); ?></p>
-		<p>
-			<?php echo esc_html__( "An account can also be added by typing in the secret. After you've added your account to the App, please type the code you see on the screen into the Authenticator Code field and press the Verify Authenticator Code button.", 'google-authenticator' ); ?>
-		</p>
-		<p>
-			<?php echo esc_html__( 'If the account setup was successful, you will be logged out, and will need to login again using your Username, Password and Authenticator code generated using the App on your mobile device.', 'google-authenticator' ); ?>
-		</p>
-		<form method="post">
-		<?php $this->profile_personal_options( array(
-			'show_active' => false,
-			'show_relaxed_mode' => false,
-			'show_description' => false,
-			'show_secret_qr' => true,
-			'show_secret_buttons' => false,
-			'show_authenticator_code' => true,
-			'show_app_password' => false,
-		)); ?>
-		</form>
+	<div class="google-authenticator wrap">
+		<div class="inner-wrap">
+			<h1><?php esc_html_e( '2FA Authenticator Settings', 'google-authenticator' ); ?></h1>
+			<?php if (is_wp_error( $error ) ): ?>
+				<div class="error notice"><p><?php esc_html_e( $error->get_error_message() ); ?></p></div>
+			<?php endif; ?>
+			<p><?php echo esc_html__( "If you haven't already done so, please install the Authy or Google Authenticator app on your mobile device from the App Store:", 'google-authenticator' ); ?></p>
+			<div class="app-list">
+				<?php foreach( $app_links as $app_link ): ?>
+					<a class="app-card button-primary" href="<?php echo esc_url( $app_link[ 'link' ] ); ?>" target="_blank"><?php echo esc_html( $app_link[ 'text' ] ); ?></a>
+				<?php endforeach; ?>
+			</div>
+			<p><?php echo esc_html__( 'The easiest way to enable your account is to add an account by scanning the QR code using the app.', 'google-authenticator' ); ?></p>
+			<p>
+				<?php echo esc_html__( "An account can also be added by typing in the secret. After you've added your account to the App, please type the code you see on the screen into the Authenticator Code field and press the Verify Authenticator Code button.", 'google-authenticator' ); ?>
+			</p>
+			<p>
+				<?php echo esc_html__( 'If the account setup was successful, you will be logged out, and will need to login again using your Username, Password and Authenticator code generated using the App on your mobile device.', 'google-authenticator' ); ?>
+			</p>
+			<form method="post">
+			<?php $this->profile_personal_options( array(
+				'show_active' => false,
+				'show_relaxed_mode' => false,
+				'show_description' => false,
+				'show_secret_qr' => true,
+				'show_secret_buttons' => false,
+				'show_authenticator_code' => true,
+				'show_app_password' => false,
+			)); ?>
+			</form>
+		</div>
 	</div>
 	<?php
 }
@@ -434,7 +450,7 @@ function common_admin_setup_page( $is_network = false ) {
 	$is_updated = $this->save_submitted_admin_setup_page( $is_network );
 	?>
 	<div class="wrap">
-		<h1><?php esc_html_e( 'Google Authenticator Settings', 'google-authenticator' ); ?></h1>
+		<h1><?php esc_html_e( '2FA Authenticator Settings', 'google-authenticator' ); ?></h1>
 		<?php if ( $is_updated ): ?>
 			<?php if ( $is_network ): ?>
 				<div class="notice notice-success is-dismissible"><p><?php esc_html_e( 'Successfullly saved your settings for the network', 'google-authenticator' ); ?></p></div>
@@ -462,7 +478,7 @@ function common_admin_setup_page( $is_network = false ) {
 					</label>
 				</p>
 			<?php endif; ?>
-			<h2><?php esc_html_e( 'Roles requiring Google Authenticator Enabled', 'google-authenticator' ); ?></h2>
+			<h2><?php esc_html_e( 'Roles requiring 2FA Authenticator Enabled', 'google-authenticator' ); ?></h2>
 			<?php foreach ($roles as $role_key => $role) {
 				$this->show_role_checkbox( $role_key, $role, $is_network );
 			}
@@ -472,7 +488,7 @@ function common_admin_setup_page( $is_network = false ) {
 			} else {
 				esc_html_e( 'Network-wide settings in effect, only a super admin can modify them.', 'google-authenticator' );
 				if ( current_user_can( 'manage_network' ) ) :?>
-					<a href="<?php echo network_admin_url( 'settings.php?page=google_authenticator' ) ?>"><?php esc_html_e( 'Change network wide Google Authenticator settings', 'google-authenticator' ); ?></a>
+					<a href="<?php echo network_admin_url( 'settings.php?page=google_authenticator' ) ?>"><?php esc_html_e( 'Change network wide 2FA Authenticator settings', 'google-authenticator' ); ?></a>
 				<?php endif;
 			}
 			?>
@@ -543,7 +559,7 @@ function network_admin_setup_page() {
  */
 function loginform() {
     echo "\t<p>\n";
-    echo "\t\t<label title=\"".__('If you don\'t have Google Authenticator enabled for your WordPress account, leave this field empty.','google-authenticator')."\">".__('Google Authenticator code','google-authenticator')."<span id=\"google-auth-info\"></span><br />\n";
+    echo "\t\t<label title=\"".__('If you don\'t have a 2FA Authenticator enabled for your WordPress account, leave this field empty.','google-authenticator')."\">".__('2FA Authenticator code','google-authenticator')."<span id=\"google-auth-info\"></span><br />\n";
     echo "\t\t<input type=\"text\" name=\"googleotp\" id=\"googleotp\" class=\"input\" value=\"\" size=\"20\" style=\"ime-mode: inactive;\" autocomplete=\"off\" /></label>\n";
     echo "\t</p>\n";
     echo "\t<script type=\"text/javascript\">\n";
@@ -580,7 +596,7 @@ function check_otp( $user, $username = '', $password = '' ) {
 		$user = get_user_by( 'email', $username );
 	}
 
-	// Does the user have the Google Authenticator enabled ?
+	// Does the user have the 2FA Authenticator enabled ?
 	if ( isset( $user->ID ) && trim(get_user_option( 'googleauthenticator_enabled', $user->ID ) ) == 'enabled' ) {
 
 		// Get the users secret
@@ -615,11 +631,11 @@ function check_otp( $user, $username = '', $password = '' ) {
 					return new WP_User( $user->ID );
 				} else {
 					// Wrong XMLRPC/APP password !
-					return new WP_Error( 'invalid_google_authenticator_password', __( '<strong>ERROR</strong>: The Google Authenticator password is incorrect.', 'google-authenticator' ) );
+					return new WP_Error( 'invalid_google_authenticator_password', __( '<strong>ERROR</strong>: The 2FA Authenticator password is incorrect.', 'google-authenticator' ) );
 				}
 			} else {
 				if ( ! $this->is_two_screen_signin_enabled() ) {
-					return new WP_Error( 'invalid_google_authenticator_token', __( '<strong>ERROR</strong>: The Google Authenticator code is incorrect or has expired.', 'google-authenticator' ) );
+					return new WP_Error( 'invalid_google_authenticator_token', __( '<strong>ERROR</strong>: The 2FA Authenticator code is incorrect or has expired.', 'google-authenticator' ) );
 				} else {
 					wp_logout();
 					$this->secondary_login_screen();
@@ -638,9 +654,9 @@ function secondary_login_screen() {
 	login_header( esc_html__('Secondary Login Screen', 'google-authenticator' ) );
 	if ( array_key_exists( 'googleotp', $_REQUEST ) ) {
 		if ( 0 === strlen( $_REQUEST[ 'googleotp'] ) ) {
-			$error_message = __( '<strong>ERROR</strong>: The Google Authenticator code is missing.', 'google-authenticator' );
+			$error_message = __( '<strong>ERROR</strong>: The 2FA Authenticator code is missing.', 'google-authenticator' );
 		} else {
-			$error_message = __( '<strong>ERROR</strong>: The Google Authenticator code is incorrect or has expired.', 'google-authenticator' );
+			$error_message = __( '<strong>ERROR</strong>: The 2FA Authenticator code is incorrect or has expired.', 'google-authenticator' );
 		}
 		echo '<div id="login_error">' . $error_message . '</div>';
 	}?>
@@ -652,7 +668,7 @@ function secondary_login_screen() {
 				<input name="rememberme" type="hidden" id="rememberme" value="forever" />
 		<?php endif; ?>
 		<?php $this->loginform(); ?>
-		<p><?php esc_html_e( 'Please enter the Google Authenticator code using the app on your device.', 'google-authenticator' ); ?></p>
+		<p><?php esc_html_e( 'Please enter the 2FA Authenticator code using the app on your device.', 'google-authenticator' ); ?></p>
 		<p class="submit">
 			<input type="submit" name="wp-submit" id="wp-submit" class="button button-primary button-large" value="<?php esc_attr_e('Log In'); ?>" />
 			<input type="hidden" name="redirect_to" value="<?php echo esc_attr($redirect_to); ?>" />
@@ -715,7 +731,7 @@ function profile_personal_options( $args = array() ) {
 		}
 	}
 
-	echo "<h3>".__( 'Google Authenticator Settings', 'google-authenticator' )."</h3>\n";
+	echo "<h3>".__( '2FA Authenticator Settings', 'google-authenticator' )."</h3>\n";
 
 	echo "<table class=\"form-table\">\n";
 	echo "<tbody>\n";
@@ -762,7 +778,7 @@ function profile_personal_options( $args = array() ) {
 	echo "<td><div id=\"GA_QR_INFO\" style=\"{$qr_style}\" >";
 	echo "<div id=\"GA_QRCODE\"/></div>";
 
-	echo '<span class="description"><br/> ' . __( 'Scan this with the Google Authenticator app.', 'google-authenticator' ) . '</span>';
+	echo '<span class="description"><br/> ' . __( 'Scan this with your authenticator app.', 'google-authenticator' ) . '</span>';
 	echo "</div></td>\n";
 	echo "</tr>\n";
 	if ( $args['show_secret_qr']) : ?>
@@ -794,7 +810,7 @@ function profile_personal_options( $args = array() ) {
 	if ( $args['show_authenticator_code']) {
 		echo "<tr>\n";
 		echo "<th><label for=\"GA_otp_code\">" . __( 'Authenticator Code', 'google-authenticator' ) . "</label></th>\n";
-		echo "<td><input name=\"GA_otp_code\" id=\"GA_otp_code\" type=\"text\" size=\"25\" /><span class=\"description\">" . __( 'After adding the site to your google authy account, add your authenticator code here.', 'google-authenticator' ) . "</span><br /></td>\n";
+		echo "<td><input name=\"GA_otp_code\" id=\"GA_otp_code\" type=\"text\" size=\"25\" /><div style='margin-top: 10px;' class=\"description\">" . __( 'After adding the site to your google or authy account, add your authenticator code here.', 'google-authenticator' ) . "</div><br /></td>\n";
 		echo "</tr>\n";
 	}
 
